@@ -41,23 +41,40 @@ func (t *Transaction) GetMinShares() int {
 	}
 }
 
-func (t *Transaction) MakeTransaction() {
+func (t *Transaction) HasExistPendingSharesInSellingOrder() bool {
+	return t.SellingOrder.PendingShares > 0
+}
 
+func (t *Transaction) HasExistPendingSharesInBuyingOrder() bool {
+	return t.BuyingOrder.PendingShares > 0
+}
+
+func (t *Transaction) CloseSellingOrder() {
+	t.SellingOrder.Status = "CLOSED"
+}
+
+func (t *Transaction) CloseBuyinhOrder() {
+	t.BuyingOrder.Status = "CLOSED"
+}
+
+func (t *Transaction) SetTotalTransactionPrice() {
+	t.Total = float64(t.Shares) * t.BuyingOrder.Price
+}
+
+func (t *Transaction) MakeTransaction() {
 	minsShares := t.GetMinShares()
 	t.SellingOrder.Investor.UpdateAssetPosition(t.SellingOrder.Asset.ID, -minsShares)
-	t.SellingOrder.PendingShares -= minsShares
-
+	t.SellingOrder.ChangeShareValue(minsShares)
 	t.BuyingOrder.Investor.UpdateAssetPosition(t.SellingOrder.Asset.ID, minsShares)
-	t.SellingOrder.PendingShares -= minsShares
+	t.BuyingOrder.ChangeShareValue(minsShares)
+	t.SetTotalTransactionPrice()
 
-	t.Total = float64(t.Shares) * t.BuyingOrder.Price
-
-	if t.BuyingOrder.PendingShares == 0 {
-		t.BuyingOrder.Status = "CLOSED"
+	if t.HasExistPendingSharesInBuyingOrder() {
+		t.CloseBuyinhOrder()
 	}
 
-	if t.SellingOrder.PendingShares == 0 {
-		t.SellingOrder.Status = "CLOSED"
+	if t.HasExistPendingSharesInSellingOrder() {
+		t.CloseSellingOrder()
 	}
 
 }
