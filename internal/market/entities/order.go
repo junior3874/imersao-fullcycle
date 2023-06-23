@@ -25,3 +25,7 @@ func NewOrder(orderID string, investor *Investor, asset *Asset, shares int, pric
 		Transactions:  []*Transaction{},
 	}
 }
+
+func (o *Order) ChangeShareValue(value int) {
+	o.PendingShares += value
+}
